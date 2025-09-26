@@ -134,9 +134,10 @@ with tab2:
                 message = f"📣 会議日程が決定しました：*{final_candidate}* です！"
                 if meeting_url:
                     message += f"\n会議URL: {meeting_url}"
-                slack_client.send_final_decision(message, channel=channel_id)
+                slack_client.send_final_decision(channel_id, message)
                 st.success("Slackに確定日程を通知しました！")
                 
                 st.session_state.active_meeting_info = None
                 del st.session_state.results_to_confirm
+
                 st.rerun()
