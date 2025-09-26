@@ -5,10 +5,7 @@ st.set_page_config(page_title="Slack連携 日程調整", page_icon="🗓️")
 db.init_db()
 st.title("📅 Slack日程調整アプリ（修正版）")
 
-with st.expander("デバッグ情報", expanded=False):
-    st.write({"ENV_SLACK_BOT_TOKEN": bool(os.getenv("SLACK_BOT_TOKEN")),
-              "SECRETS_SLACK_BOT_TOKEN": bool(st.secrets.get("SLACK_BOT_TOKEN")) if hasattr(st,"secrets") else False})
-
+# --- 入力欄 ---
 channel_id = st.text_input("Slack チャンネルID (例: CXXXXXXXX)")
 meeting_title = st.text_input("投票タイトル", value="次回ミーティング候補")
 
@@ -51,7 +48,7 @@ if st.button("投票結果を読み込む"):
         if not rows: st.info("該当メッセージが見つかりませんでした。")
         else:
             import pandas as pd
-            df = pd.DataFrame([{"候補": r["option"], "✅ 可": r["yes_count"], "❌ 不可": r["no_count"],
+            df = pd.DataFrame([{ "候補": r["option"], "✅ 可": r["yes_count"], "❌ 不可": r["no_count"],
                                 "✅ メンバー": ", ".join(r["yes_names"]) if show_names else "",
                                 "❌ メンバー": ", ".join(r["no_names"]) if show_names else ""} for r in rows])
             st.dataframe(df, use_container_width=True, hide_index=True)
@@ -69,5 +66,3 @@ if st.button("この内容でSlackに確定を通知"):
         if meeting_url: msg += f"\n会議URL: {meeting_url}"
         try: st.success("Slackに確定日程を通知しました！"); st.write("メッセージURL:", slack_client.send_final_decision(channel_id, msg))
         except Exception as e: st.exception(e)
-
-
