@@ -1,0 +1,4 @@
+streamlit
+slack_sdk
+python-dotenv
+pandas
