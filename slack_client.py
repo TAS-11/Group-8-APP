@@ -17,6 +17,19 @@ _token = _os.getenv("SLACK_BOT_TOKEN") or _st.secrets.get("SLACK_BOT_TOKEN")
 if not _token: raise SetupError("SLACK_BOT_TOKEN が見つかりません。")
 _client = _WebClient(token=_token)
 
+_bot_user_id_cache: str | None = None
+
+def _get_bot_user_id() -> str | None:
+    global _bot_user_id_cache
+    if _bot_user_id_cache:
+        return _bot_user_id_cache
+    try:
+        info = _client.auth_test()
+        _bot_user_id_cache = info.get("user_id")
+        return _bot_user_id_cache
+    except _SlackApiError:
+        return None
+
 def _raise_from(e: _SlackApiError):
     data = e.response.data if hasattr(e, "response") else {}
     raise SlackCallError(code=data.get("error", "unknown_error"), message=str(e))
@@ -60,9 +73,12 @@ def fetch_poll_results(channel_id: str, title: str, lookback_hours: int = 168) -
     import time
     oldest = int(time.time()) - lookback_hours * 3600
     results = {}
+    bot_uid = _get_bot_user_id()
+
     try:
         resp = _client.conversations_history(channel=channel_id, oldest=oldest, limit=200, inclusive=True)
     except _SlackApiError as e: _raise_from(e)
+
     for msg in resp.get("messages", []):
         text = msg.get("text","") or ""
         opt = _parse_option_from_text(title, text)
@@ -71,6 +87,9 @@ def fetch_poll_results(channel_id: str, title: str, lookback_hours: int = 168) -
         for r in (msg.get("reactions") or []):
             if r.get("name")=="white_check_mark": yes_ids += (r.get("users") or [])
             elif r.get("name")=="x": no_ids += (r.get("users") or [])
+        if bot_uid:
+            yes_ids = [u for u in yes_ids if u != bot_uid]
+            no_ids  = [u for u in no_ids  if u != bot_uid]
         yes_names = [get_user_display_name(u) for u in yes_ids]
         no_names  = [get_user_display_name(u) for u in no_ids]
         results[opt] = {
