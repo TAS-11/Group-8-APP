@@ -3,7 +3,7 @@ import db, slack_client
 
 st.set_page_config(page_title="Slack連携 日程調整", page_icon="🗓️")
 db.init_db()
-st.title("📅 Slack日程調整アプリ（修正版）")
+st.title("📅 Slack日程調整アプリ")
 
 # --- 入力欄 ---
 channel_id = st.text_input("Slack チャンネルID (例: CXXXXXXXX)")
@@ -66,3 +66,4 @@ if st.button("この内容でSlackに確定を通知"):
         if meeting_url: msg += f"\n会議URL: {meeting_url}"
         try: st.success("Slackに確定日程を通知しました！"); st.write("メッセージURL:", slack_client.send_final_decision(channel_id, msg))
         except Exception as e: st.exception(e)
+
